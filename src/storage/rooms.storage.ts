@@ -47,8 +47,14 @@ class RoomsStorage {
         return this.rooms.filter((room) => room.roomUsers.length < 2);
     }
 
-    addShips = (userId: number, sourceShips: any) => {
-    //
+    addShips = (gameId: number, indexPlayer: number, ships: IShipData[]) => {
+        const room = this.rooms.find((room) =>
+            room.index === gameId);
+        const user = room.roomUsers.find((user) =>
+            user.index === indexPlayer);
+
+        user.sourceShips = ships;
+        user.ships = this.convertSourceShips(ships);
     }
 
     isRoomReady = (indexRoom: number): boolean => {
@@ -119,3 +125,5 @@ class RoomsStorage {
         return ships;
     }
 }
+
+export default new RoomsStorage();

@@ -3,6 +3,9 @@ import * as WebSocket from "ws";
 import { IncomingMessage } from "http";
 import { parseMessage } from "../helpers/parseMessage";
 import { Command, ICommand } from "../types/command";
+import { login} from "../controllers/login.controller";
+import {addShips, addUserToRoom, createRoom, updateRooms} from "../controllers/room.controller";
+import { updateWinners } from "../controllers/winner.controller";
 
 export type WebSocketClient = WebSocket & { sessionId: string};
 
@@ -25,19 +28,19 @@ wss.on('connection', (currentClient: WebSocketClient, request: IncomingMessage) 
 
         switch (command.type) {
             case Command.login:
-                // Login controller
+                login(command.data, currentClient);
                 break;
 
             case Command.createRoom:
-                // Room controller
+                createRoom(currentClient);
                 break;
 
             case Command.addUserToRoom:
-                // Room controller
+                addUserToRoom(command.data, currentClient);
                 break;
 
             case Command.addShips:
-                // Room controller
+                addShips(command.data)
                 break;
 
             case Command.attack:
@@ -52,7 +55,7 @@ wss.on('connection', (currentClient: WebSocketClient, request: IncomingMessage) 
                 break;
         }
 
-        // Update rooms for all
-        // Update winners for all
+        updateRooms(wss.clients as Set<WebSocket>);
+        updateWinners(wss.clients as Set<WebSocket>);
     })
 })
