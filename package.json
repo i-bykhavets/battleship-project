@@ -3,13 +3,13 @@
     "version": "1.0.0",
     "description": "Template for the WebSocket remote control task",
     "main": "index.js",
-    "type": "module",
     "scripts": {
-        "start": "node ./index.js",
-        "start:dev": "nodemon ./index.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start:back": "tsc && node ./dist/ws_server/index.js",
+        "start:back:dev": "nodemon ./src/ws_server/index.ts",
+        "start:front": "tsc && node ./dist/index.js",
+        "build": "tsc"
     },
-    "author": "Andrei Auchynnikau",
+    "author": "Ilya Bykhavets",
     "keywords": [],
     "license": "ISC",
     "devDependencies": {
