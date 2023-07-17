@@ -15,10 +15,10 @@ const wss = new WebSocketServer({ port: WS_PORT, clientTracking: true });
 
 wss.on('connection', (currentClient: WebSocketClient, request: IncomingMessage) => {
     currentClient.sessionId = request.headers["sec-websocket-key"];
-    console.log(`New client connected, sessionId is ${currentClient.sessionId}`);
+    console.log(`New ws client connected (sessionId=${currentClient.sessionId})`);
 
     currentClient.on('close', (code: number) => {
-        console.log(`Client disconnected with code=${code}, sessionId was ${currentClient.sessionId}`);
+        console.log(`Ws client disconnected with code=${code} (sessionId=${currentClient.sessionId})`);
         // Close connection
     })
 

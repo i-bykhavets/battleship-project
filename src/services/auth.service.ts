@@ -8,3 +8,5 @@ export interface IAuthResult {
 // export const authenticate = (userName: string, password: string): IAuthResult => {
 //     const user = usersStorage.getUser()
 // }
+
+

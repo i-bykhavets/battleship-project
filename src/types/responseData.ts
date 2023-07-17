@@ -4,3 +4,13 @@ export interface ILoginResponseData {
     error: boolean;
     errorText: string;
 }
+
+interface IRoomUserData {
+    name: string,
+    index: number,
+}
+
+export interface IRoomResponseData {
+    roomId: number,
+    roomUsers: IRoomUserData[],
+}

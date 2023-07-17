@@ -1,26 +1,21 @@
-import {WebSocketClient} from "../ws_server";
 import * as WebSocket from "ws";
-import {Command, ICommand} from "../types/command";
-import usersStorage from "../storage/users.storage";
-import roomsStorage from "../storage/rooms.storage";
+
+import {WebSocketClient} from "../ws_server";
+import {Command} from "../types/command";
 import {IAddShipsRequestData, IAddUserToRoomRequestData} from "../types/requestData";
+import * as roomService from '../services/room.service';
+
+import {sendMessage} from "../helpers/sendMessage";
+import {IRoomResponseData} from "../types/responseData";
 
 export const createRoom = (wsClient: WebSocketClient) => {
-    const user = usersStorage.getUser(wsClient.sessionId);
-    roomsStorage.createRoom(user);
-
-    // const command: ICommand = {
-    //     type: Command.createGame,
-    //     data: JSON.stringify(createRoomData),
-    //     id: 0,
-    // }
-    // wsClient.send(JSON.stringify(command));
+    roomService.createRoom(wsClient);
 }
 
 export const updateRooms = (wssClients: Set<WebSocket>) => {
-    const availableRooms = roomsStorage.getAvailableRooms();
+    const availableRooms = roomService.getAvailableRooms();
 
-    const roomsData = availableRooms.map((room) => ({
+    const roomsData: IRoomResponseData[] = availableRooms.map((room) => ({
         roomId: room.index,
         roomUsers: room.roomUsers.map((user) => ({
             name: user.userName,
@@ -28,14 +23,8 @@ export const updateRooms = (wssClients: Set<WebSocket>) => {
         }))
     }))
 
-    wssClients.forEach((wsClient) => {
-        const command: ICommand = {
-            type: Command.updateRoom,
-            data: JSON.stringify(roomsData),
-            id: 0,
-        };
-
-        wsClient.send(JSON.stringify(command));
+    wssClients.forEach((wsClient: WebSocketClient) => {
+        sendMessage(wsClient, Command.updateRoom, roomsData)
     })
 }
 
@@ -43,11 +32,7 @@ export const addUserToRoom = (
     data: IAddUserToRoomRequestData,
     wsClient: WebSocketClient
 ) => {
-    const user = usersStorage.getUser(wsClient.sessionId);
-    roomsStorage.addUserToRoom(data.indexRoom, user);
-
-    const room = roomsStorage.getUserRoom(user.index);
-    const roomUsers = room.roomUsers;
+    const { room, roomUsers } = roomService.addUserToRoom(wsClient, data.indexRoom);
 
     if (roomUsers.length == 2) {
         roomUsers.map((user) => {
@@ -56,13 +41,7 @@ export const addUserToRoom = (
                 idPlayer: user.index,
             };
 
-            const command: ICommand = {
-                type: Command.createGame,
-                data: JSON.stringify(createGameData),
-                id: 0,
-            };
-
-            user.wsClient.send(JSON.stringify(command));
+            sendMessage(user.wsClient, Command.createGame, createGameData);
         })
     }
 }
@@ -70,37 +49,21 @@ export const addUserToRoom = (
 export const addShips = (data: IAddShipsRequestData) => {
     const {gameId, indexPlayer, ships} = data;
 
-    roomsStorage.addShips(gameId, indexPlayer, ships);
+    const { isRoomReady, roomUsers } = roomService.addShips(gameId, indexPlayer, ships);
 
-    if (roomsStorage.isRoomReady(gameId)) {
-        const roomUsers = roomsStorage.getRoomUsers(gameId);
-
-        roomsStorage.setCurrentTurn(gameId, data.indexPlayer);
-
+    if (isRoomReady) {
         roomUsers.map((user) => {
             const startGameData = {
                 ships: user.ships,
                 currentPlayerIndex: user.index,
             };
 
-            const commandStart: ICommand = {
-                type: Command.startGame,
-                data: JSON.stringify(startGameData),
-                id: 0,
-            };
-
             const turnData = {
                 currentPlayer: indexPlayer,
             }
 
-            const commandTurn: ICommand = {
-                type: Command.turn,
-                data: JSON.stringify(turnData),
-                id: 0,
-            };
-
-            user.wsClient.send(JSON.stringify(commandStart));
-            user.wsClient.send(JSON.stringify(commandTurn));
+            sendMessage(user.wsClient, Command.startGame, startGameData);
+            sendMessage(user.wsClient, Command.turn, turnData);
         })
     }
 }
